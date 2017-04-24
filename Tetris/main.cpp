@@ -9,7 +9,7 @@ const int WIDTH = 1 * MULTIPLER;
 const int HEIGTH = 2 * MULTIPLER;
 bool activePiece = false; // tez zmienic bo gowno, mowi czy losowac klocek czy nie
 
-Piece piece(Piece::pieceI);//piece is global for now
+Piece piece(Piece::pieceJ);//piece is global for now
 
 
 enum Directions {
@@ -39,6 +39,7 @@ int main(){
 	sf::RenderWindow window;
 	window.create(sf::VideoMode(WIDTH, HEIGTH), "Tetris!");
 	window.setFramerateLimit(FPS_NUMBER);
+	//window.setKeyRepeatEnabled(false);
 
 	sf::Clock clock;
 	sf::Time programTime;
@@ -54,36 +55,42 @@ int main(){
 void processInput(sf::RenderWindow &window) {
 	//sfml window event capture
 	sf::Event event;
-	while (window.pollEvent(event))
-	{
+	while (window.pollEvent(event)){
 		if (event.type == sf::Event::Closed)
 			window.close();
+		//keyboard input
+		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Left) {
+			move(Left);
+		}
+		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Right) {
+			move(Right);
+		}
+		else if (event.type == sf::Event::KeyPressed &&(event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::X)) {
+			rotate(Right);
+			window.setKeyRepeatEnabled(false);
+		}
+		else if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::LControl || event.key.code == sf::Keyboard::Z)) {
+			rotate(Left);
+			window.setKeyRepeatEnabled(false);
+		}
+		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down) {
+			move(SoftDown);
+		}
+		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) {
+			move(DropDown);
+		}
+		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) {
+			//pause in future
+		}
+		else if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::LShift || event.key.code == sf::Keyboard::C)) {
+			//hold
+		}
+		if (event.type ==sf::Event::KeyReleased) {
+			window.setKeyRepeatEnabled(true);
+		}
+
 	}
-	//keyboard input
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)){
-		move(Left);
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)){
-		move(Right);
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-		move(SoftDown);
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-		move(DropDown);
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::X)){
-		rotate(Right);
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
-		rotate(Left);
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::C)) {
-		//hold
-	}
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
-		//pause in future
-	}
+
 }
 int counter = 0;
 void update(int board[HEIGTH][WIDTH], Piece piece) {
@@ -158,14 +165,14 @@ void rotate(Directions direction) {
 	}
 	switch (direction) {
 	case Left:
-		if (piece.pieceType != piece.pieceI) {
+		if (piece.pieceType != piece.pieceI && piece.pieceType != piece.pieceO) {
 			for (int i = 1; i < 4; i++) {
 				for (int j = 0; j < 3; j++) {
 					piece.shape[i][j] = tempArr[3 - j][i - 1];
 				}
 			}
 		}
-		else {
+		else if(piece.pieceType != piece.pieceO){
 			for (int i = 0; i < 4; i++) {
 				for (int j = 0; j < 4; j++) {
 					piece.shape[i][j] = tempArr[3 - j][i];
@@ -181,7 +188,7 @@ void rotate(Directions direction) {
 				}
 			}
 		}
-		else {
+		else if (piece.pieceType != piece.pieceO) {
 			for (int i = 0; i < 4; i++) {
 				for (int j = 0; j < 4; j++) {
 					piece.shape[i][j] = tempArr[j][3 - i];
@@ -190,7 +197,4 @@ void rotate(Directions direction) {
 		}
 		break;
 	}
-}
-void clear() {
-
 }

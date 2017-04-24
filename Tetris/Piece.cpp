@@ -39,17 +39,17 @@ Piece::Piece(Pieces piece) {
 		break;
 	case pieceL:
 		pieceType = pieceL;
-		shape[3][0] = pieceCode;
-		shape[3][1] = pieceCode;
+		shape[2][2] = pieceCode;
+		shape[2][1] = pieceCode;
 		shape[2][0] = pieceCode;
-		shape[1][0] = pieceCode;
+		shape[1][2] = pieceCode;
 		break;
 	case pieceJ:
 		pieceType = pieceJ;
-		shape[3][1] = pieceCode;
-		shape[3][2] = pieceCode;
 		shape[2][2] = pieceCode;
-		shape[1][2] = pieceCode;
+		shape[2][1] = pieceCode;
+		shape[2][0] = pieceCode;
+		shape[1][0] = pieceCode;
 		break;
 	case pieceT:
 		pieceType = pieceT;
