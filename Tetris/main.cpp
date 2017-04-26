@@ -11,6 +11,8 @@ const int WIDTH = 1 * MULTIPLER;
 const int HEIGTH = 2 * MULTIPLER;
 const int BOARD_WIDTH = 10;
 const int BOARD_HEIGTH = 20;
+
+int board[BOARD_HEIGTH][BOARD_WIDTH] = { 0 };
 bool activePiece = false; // tez zmienic bo gowno, mowi czy losowac klocek czy nie
 Piece piece = Piece::pieceO; // just initializing no matter with what
 
@@ -21,11 +23,11 @@ enum Directions {
 };
 
 void processInput(sf::RenderWindow &window);
-void update(int board[BOARD_HEIGTH][BOARD_WIDTH]);
-void render(sf::RenderWindow &window, int board[BOARD_HEIGTH][BOARD_WIDTH]);
+void update();
+void render(sf::RenderWindow &window);
 void move(Directions direction);
 void rotate(Directions direction);
-void checkIfLanded(int board[BOARD_HEIGTH][BOARD_WIDTH]);
+void checkIfLanded();
 
 int main(){
 	/*
@@ -40,7 +42,7 @@ int main(){
 	0 - empty
 	*/
 	srand(time(NULL));
-	int board[BOARD_HEIGTH][BOARD_WIDTH] = { 0 };
+	
 
 	sf::RenderWindow window;
 	window.create(sf::VideoMode(WIDTH, HEIGTH), "Tetris!");
@@ -55,8 +57,8 @@ int main(){
 	while (window.isOpen()) {
 		
 		processInput(window);
-		update(board);
-		render(window, board);
+		update();
+		render(window);
 
 	}
 
@@ -103,7 +105,7 @@ void processInput(sf::RenderWindow &window) {
 
 }
 int counter = 0;
-void update(int board[BOARD_HEIGTH][BOARD_WIDTH]) {
+void update() {
 	//piece fall speed
 	counter++;
 	if (counter > 60) {//60 speed fall limiter
@@ -111,45 +113,12 @@ void update(int board[BOARD_HEIGTH][BOARD_WIDTH]) {
 		counter = 0;
 	}
 
-	//
-	/*int x[4];
-	int y[4];
-	int iterator = 0;
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			if (piece.shape[i][j] != 0) {
-				x[iterator] = j + piece.x;
-				y[iterator] = i + piece.y;
-				iterator++;
-			}
-		}
-	}
-	piece.mostBottomY = y[0];
-	for (int i = 1; i < 4; i++) {
-		if (y[i] > piece.mostBottomY)
-			piece.mostBottomY = y[i];
-	}
-	piece.mostLeftX = x[0];
-	piece.mostRightX = x[0];
-
-	for (int i = 1; i < 4; i++) {
-		if (x[i] > piece.mostRightX)
-			piece.mostRightX = x[i];
-		if (x[i] < piece.mostLeftX)
-			piece.mostLeftX = x[i];
-	}*/
 	
-	checkIfLanded(board);
-	/*for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			if (piece.shape[i][j] != 0) {
-				board[piece.x+j][piece.y+i] = piece.shape[i][j];
-			}
-		}
-	}*/
+	checkIfLanded();
+
 
 }
-void render(sf::RenderWindow &window, int board[BOARD_HEIGTH][BOARD_WIDTH]) {
+void render(sf::RenderWindow &window) {
 	sf::RectangleShape rectangle(sf::Vector2f(30, 30));
 	rectangle.setFillColor(sf::Color(119, 221, 119, 255));
 
@@ -174,11 +143,23 @@ void render(sf::RenderWindow &window, int board[BOARD_HEIGTH][BOARD_WIDTH]) {
 }
 void move(Directions direction){
 
+	bool isThereAnObstacle = false;
 	switch (direction) {
 	case Left:
+		for (int i = 0; i < 4; i++) {
+			if (piece.shape[i].x + piece.position.x == 0 || board[piece.shape[i].y + piece.position.y][piece.shape[i].x + piece.position.x - 1] != 0)
+				isThereAnObstacle = true;
+		}
+		if(!isThereAnObstacle)
 			piece.position.x--;
+			
 		break;
 	case Right:
+		for (int i = 0; i < 4; i++) {
+			if (piece.shape[i].x + piece.position.x == BOARD_WIDTH - 1 || board[piece.shape[i].y + piece.position.y][piece.shape[i].x + piece.position.x + 1] != 0)
+				isThereAnObstacle = true;
+		}
+		if (!isThereAnObstacle)
 			piece.position.x++;
 		break;
 	case SoftDown:
@@ -224,10 +205,10 @@ void rotate(Directions direction) {
 		break;
 	}
 }
-void checkIfLanded(int board[BOARD_HEIGTH][BOARD_WIDTH]) {
+void checkIfLanded() {
 	bool pieceLanded = false;
 	for (int i = 0; i < 4; i++) {
-		if (board[piece.shape[i].y + piece.position.y + 1][piece.shape[i].x + piece.position.x] != 0)
+		if (piece.shape[i].y + piece.position.y + 1 == 20 || board[piece.shape[i].y + piece.position.y + 1][piece.shape[i].x + piece.position.x] != 0)
 			pieceLanded = true;
 	}
 	if (pieceLanded == true) {
