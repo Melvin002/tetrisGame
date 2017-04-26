@@ -1,21 +1,21 @@
 #pragma once
+#include "Point.h"
 class Piece {
-	/* All tetris shapes fits in 4x4 array */
 public:
-	int shape[4][4];
+	Point shape[4]; //all tetris shapes contains 4 squares
+	Point position;
 	enum Pieces {
-		pieceO = 1,
-		pieceI = 2,
-		pieceS = 3,
-		pieceZ = 4,
-		pieceL = 5,
-		pieceJ = 6,
-		pieceT = 7,
+		pieceO,
+		pieceI,
+		pieceS,
+		pieceZ,
+		pieceL,
+		pieceJ,
+		pieceT,
 	};
 
-	int x; 
-	int y;
 	Pieces pieceType;
+	int pieceCode;
 
 	Piece(Pieces piece);
 private:
