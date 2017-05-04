@@ -1,5 +1,7 @@
 #pragma once
 #include "Point.h"
+#include <vector>
+
 class Piece {
 public:
 	Point shape[4]; //all tetris shapes contains 4 squares
@@ -14,10 +16,11 @@ public:
 		pieceT,
 	};
 
+	static std::vector<Pieces> randomPermutationOfPieces;
 	Pieces pieceType;
 	int pieceCode;
 
-	Piece(Pieces piece);
+	Piece();
 private:
-	void rotate();
+	void putPieceTypesAndShuffle();
 };

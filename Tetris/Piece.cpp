@@ -1,10 +1,18 @@
 #include "Piece.h"
+#include <algorithm>
 
-Piece::Piece(Pieces piece) {
+std::vector<Piece::Pieces> Piece::randomPermutationOfPieces;
 
+Piece::Piece() {
+	if (randomPermutationOfPieces.empty()) {
+		putPieceTypesAndShuffle();
+	}
+	pieceType = randomPermutationOfPieces.back();
+	randomPermutationOfPieces.pop_back();
+	
 	position = Point(3, 0);
 	pieceCode = 7;
-	switch (piece) {
+	switch (pieceType) {
 	case pieceO:
 		pieceType = pieceO;
 		shape[0] = Point(0, 0);
@@ -57,6 +65,12 @@ Piece::Piece(Pieces piece) {
 	}
 }
 
-void Piece::rotate(){
+void Piece::putPieceTypesAndShuffle(){
+	for (int enumIterator = pieceO; enumIterator <= pieceT; enumIterator++){
+		Pieces p = static_cast<Pieces>(enumIterator);
+		randomPermutationOfPieces.push_back(p);
+	}
+	std::random_shuffle(randomPermutationOfPieces.begin(), randomPermutationOfPieces.end());
+	
 }
 
