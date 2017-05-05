@@ -14,6 +14,7 @@ public:
 		pieceL,
 		pieceJ,
 		pieceT,
+		shadow
 	};
 
 	static std::vector<Pieces> randomPermutationOfPieces;

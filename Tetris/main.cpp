@@ -10,10 +10,15 @@ const int WIDTH = 1 * MULTIPLER;
 const int HEIGTH = 2 * MULTIPLER;
 const int BOARD_WIDTH = 10;
 const int BOARD_HEIGTH = 20;
+const int LOCK_DELAY = 120;
+const int SHAPE_ARRAY_SIZE = 4;
+const int POSITION_OF_PIECE_CODE = 100; // yxx / 100 = y
 
 int board[BOARD_HEIGTH][BOARD_WIDTH] = { 0 };
-bool activePiece = false; // tez zmienic bo gowno, mowi czy losowac klocek czy nie
-Piece piece; // just initializing no matter with what
+Piece piece;
+sf::RectangleShape rectangle(sf::Vector2f(30, 30));
+int ghostOffset;
+int lockDelayCounter;
 
 
 
@@ -24,10 +29,12 @@ enum Directions {
 void processInput(sf::RenderWindow &window);
 void update();
 void render(sf::RenderWindow &window);
-bool move(Directions direction);
+void move(Directions direction);
 void rotate(Directions direction);
 void checkIfLanded();
 bool isSpaceOccupied(Directions direction, Point shape[], int distance = 1);
+void clearLines();
+void setPen(sf::RenderWindow &window, Piece::Pieces pieceType, int x, int y);
 
 int main(){
 	/*
@@ -88,7 +95,7 @@ void processInput(sf::RenderWindow &window) {
 		}
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) {
 			move(DropDown);
-			piece = Piece();
+			//piece = Piece();
 		}
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) {
 			//pause in future
@@ -111,63 +118,111 @@ void update() {
 		move(SoftDown);
 		counter = 0;
 	}
-
-	
+	//find ghost bottom offset
+	ghostOffset = 0;
+	while (!isSpaceOccupied(Bottom, piece.shape, ghostOffset + 1)) {
+		ghostOffset++;
+	}
+	if (isSpaceOccupied(Bottom, piece.shape))
+		lockDelayCounter++;
+	else
+		lockDelayCounter = 0;
 	checkIfLanded();
 
 
 }
 void render(sf::RenderWindow &window) {
-	sf::RectangleShape rectangle(sf::Vector2f(30, 30));
-	rectangle.setFillColor(sf::Color(119, 221, 119, 255));
-
 	window.clear(sf::Color::Black);
 	//przelatuje po planszy i rysuje kwadracik tam gdzie cos ma byc - chujowe trzeba bedzie zmienic
 	for (int i = 0; i < BOARD_HEIGTH; i++) {
 		for (int j = 0; j < BOARD_WIDTH; j++) {
-			if (board[i][j] != 0) {
-				rectangle.setPosition(j * 30, i * 30);
-				window.draw(rectangle);
-			}
+			if(board[i][j] != 0)
+				setPen(window, static_cast<Piece::Pieces>((board[i][j] / POSITION_OF_PIECE_CODE) - 1), j * 30, i * 30);
 		}
+	}
+	//render ghost
+	for (int i = 0; i < 4; i++) {
+		setPen(window, Piece::shadow, (piece.shape[i].x + piece.position.x) * 30, (piece.shape[i].y + piece.position.y + ghostOffset) * 30);
 	}
 	//render moving piece
 	for (int i = 0; i < 4; i++){
-		rectangle.setPosition((piece.shape[i].x + piece.position.x) * 30, (piece.shape[i].y + piece.position.y) * 30);
-		window.draw(rectangle);
+		setPen(window, piece.pieceType, (piece.shape[i].x + piece.position.x) * 30, (piece.shape[i].y + piece.position.y) * 30);
 	}
-	
 
 	window.display();
 }
-bool move(Directions direction){
+void setPen(sf::RenderWindow &window, Piece::Pieces pieceType, int x, int y) {
+	switch (pieceType) {
+	case Piece::pieceO:
+		rectangle.setFillColor(sf::Color::Yellow);
+		rectangle.setPosition(x, y);
+		window.draw(rectangle);
+		break;
+	case Piece::pieceI:
+		rectangle.setFillColor(sf::Color::Cyan);
+		rectangle.setPosition(x, y);
+		window.draw(rectangle);
+		break;
+	case Piece::pieceS:
+		rectangle.setFillColor(sf::Color::Green);
+		rectangle.setPosition(x, y);
+		window.draw(rectangle);
+		break;
+	case Piece::pieceZ:
+		rectangle.setFillColor(sf::Color::Red);
+		rectangle.setPosition(x, y);
+		window.draw(rectangle);
+		break;
+	case Piece::pieceL:
+		rectangle.setFillColor(sf::Color(255, 165, 0));
+		rectangle.setPosition(x, y);
+		window.draw(rectangle);
+		break;
+	case Piece::pieceJ:
+		rectangle.setFillColor(sf::Color::Blue);
+		rectangle.setPosition(x, y);
+		window.draw(rectangle);
+		break;
+	case Piece::pieceT:
+		rectangle.setFillColor(sf::Color::Magenta);
+		rectangle.setPosition(x, y);
+		window.draw(rectangle);
+		break;
+	case Piece::shadow:
+		rectangle.setFillColor(sf::Color::White);
+		rectangle.setPosition(x, y);
+		window.draw(rectangle);
+		break;
+	}
+}
+void move(Directions direction){
 
 	switch (direction) {
 	case Left:
 		if (!isSpaceOccupied(Left, piece.shape)) {
 			piece.position.x--;
-			return true;
 		}
-
-
 		break;
 	case Right:
 		if (!isSpaceOccupied(Right, piece.shape)) {
 			piece.position.x++;
-			return true;
 		}
 		break;
 	case SoftDown:
 		if (!isSpaceOccupied(Bottom, piece.shape)) {
 			piece.position.y++;
-			return true;
 		}
 		break;
 	case Top:
 		if (!isSpaceOccupied(Top, piece.shape)) {
 			piece.position.y--;
-			return true;
 		}
+		break;
+	case DropDown:
+		while (!isSpaceOccupied(Bottom, piece.shape)) {
+			piece.position.y++;
+		}
+		lockDelayCounter = LOCK_DELAY;
 		break;
 	}
 	
@@ -335,17 +390,49 @@ void rotate(Directions direction) {
 	}
 }
 void checkIfLanded() {
-	bool pieceLanded = false;
-	for (int i = 0; i < 4; i++) {
-		if (piece.shape[i].y + piece.position.y + 1 == 20 || board[piece.shape[i].y + piece.position.y + 1][piece.shape[i].x + piece.position.x] != 0)
-			pieceLanded = true;
-	}
-	if (pieceLanded == true) {
+	if (lockDelayCounter > LOCK_DELAY) {
 		//write piece to board
 		for (int i = 0; i < 4; i++) {
 			board[piece.shape[i].y + piece.position.y][piece.shape[i].x + piece.position.x] = piece.pieceCode;
 		}
 
+		clearLines();
 		piece = Piece();
+		lockDelayCounter = 0;
+	}
+}
+void clearLines() {
+	std::vector<int> indexesOfClearedLines; //store indexes
+	int pieceInRowCounter = 0;
+	for (int i = 0; i < BOARD_HEIGTH; i++) {
+		pieceInRowCounter = 0;
+		for (int j = 0; j < BOARD_WIDTH; j++) {
+			if (board[i][j] != 0)
+				pieceInRowCounter++;
+		}
+		//find from which indexes lines should be removed
+		if (pieceInRowCounter == 10) {
+			indexesOfClearedLines.push_back(i);
+			pieceInRowCounter = 0;
+		}
+	}
+	if (!indexesOfClearedLines.empty()) {
+		int temp = indexesOfClearedLines.size();
+		for (int iOld = BOARD_HEIGTH - 1, iNew = BOARD_HEIGTH - 1; iOld >= 0; iOld--, iNew--) {
+			//skip indexes that should be romved
+			while (!indexesOfClearedLines.empty() && iOld == indexesOfClearedLines.back()) {
+				iOld--;
+				indexesOfClearedLines.pop_back();
+			}
+			for (int j = 0; j < BOARD_WIDTH; j++) {
+				board[iNew][j] = board[iOld][j];
+			}
+		}
+		for (int i = temp - 1; i >= 0; i--) {
+			//clear the rest of board
+			for (int j = 0; j < BOARD_WIDTH; j++) {
+				board[i][j] = 0;
+			}
+		}
 	}
 }
