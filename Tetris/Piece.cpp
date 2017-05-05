@@ -71,13 +71,17 @@ Piece::Piece() {
 		break;
 	}
 }
+int myrandom(int i) { 
+	return std::rand() % i; 
+}
 
 void Piece::putPieceTypesAndShuffle(){
 	for (int enumIterator = pieceO; enumIterator < shadow; enumIterator++){
 		Pieces p = static_cast<Pieces>(enumIterator);
 		randomPermutationOfPieces.push_back(p);
 	}
-	std::random_shuffle(randomPermutationOfPieces.begin(), randomPermutationOfPieces.end());
+	std::random_shuffle(randomPermutationOfPieces.begin(), randomPermutationOfPieces.end(), myrandom);
 	
 }
+
 

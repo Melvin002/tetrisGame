@@ -2,6 +2,7 @@
 #include <string>
 #include <queue>
 #include "Piece.h"
+#include <ctime>  
 #include <stdlib.h> 
 
 const int FPS_NUMBER = 60;
@@ -48,7 +49,7 @@ int main(){
 
 	0 - empty
 	*/
-	
+	std::srand(unsigned(std::time(0)));
 
 	sf::RenderWindow window;
 	window.create(sf::VideoMode(WIDTH, HEIGTH), "Tetris!");
