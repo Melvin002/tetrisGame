@@ -3,6 +3,7 @@
 
 std::vector<Piece::Pieces> Piece::randomPermutationOfPieces;
 
+
 Piece::Piece() {
 	if (randomPermutationOfPieces.empty()) {
 		putPieceTypesAndShuffle();

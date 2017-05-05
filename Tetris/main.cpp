@@ -227,7 +227,7 @@ void rotate(Directions direction) {
 			}
 		}
 		for (int i = 0; i < 4; i++) {
-			if (tempShape[i].x + piece.position.x == -1 || tempShape[i].x + piece.position.x == BOARD_WIDTH) {
+			if (tempShape[i].x + piece.position.x < 0 || tempShape[i].x + piece.position.x >= BOARD_WIDTH || board[tempShape[i].y + piece.position.y][tempShape[i].x + piece.position.x] != 0) {
 				isRotationPossible = false;
 			}
 		}
@@ -276,16 +276,59 @@ void rotate(Directions direction) {
 	case Left:
 		if (piece.pieceType != piece.pieceI) {
 			for (int i = 0; i < 4; i++) {
-				int tempX = piece.shape[i].x;
-				piece.shape[i].x = piece.shape[i].y;
-				piece.shape[i].y = 2 - tempX;
+				tempShape[i].x = piece.shape[i].y;
+				tempShape[i].y = 2 - piece.shape[i].x;
 			}
 		}
 		else if (piece.pieceType != piece.pieceO) {
 			for (int i = 0; i < 4; i++) {
-				int tempX = piece.shape[i].x;
-				piece.shape[i].x = piece.shape[i].y;
-				piece.shape[i].y = 3 - tempX;
+				tempShape[i].x = piece.shape[i].y;
+				tempShape[i].y = 3 - piece.shape[i].x;
+			}
+		}
+		for (int i = 0; i < 4; i++) {
+			if (tempShape[i].x + piece.position.x < 0 || tempShape[i].x + piece.position.x >= BOARD_WIDTH || board[tempShape[i].y + piece.position.y][tempShape[i].x + piece.position.x] != 0) {
+				isRotationPossible = false;
+			}
+		}
+		if (!isRotationPossible) {
+			if (!isSpaceOccupied(Left, tempShape)) {
+				piece.position.x--;
+				isRotationPossible = true;
+			}
+			else if (!isSpaceOccupied(Right, tempShape)) {
+				piece.position.x++;
+				isRotationPossible = true;
+			}
+			else if (!isSpaceOccupied(Top, tempShape)) {
+				piece.position.y--;
+				isRotationPossible = true;
+			}
+			else if (!isSpaceOccupied(Bottom, tempShape)) {
+				piece.position.y++;
+				isRotationPossible = true;
+			}
+			else if (!isSpaceOccupied(Left, tempShape, 2)) {
+				piece.position.x -= 2;
+				isRotationPossible = true;
+			}
+			else if (!isSpaceOccupied(Right, tempShape, 2)) {
+				piece.position.x += 2;
+				isRotationPossible = true;
+			}
+			else if (!isSpaceOccupied(Top, tempShape, 2)) {
+				piece.position.y -= 2;
+				isRotationPossible = true;
+			}
+			else if (!isSpaceOccupied(Bottom, tempShape, 2)) {
+				piece.position.y += 2;
+				isRotationPossible = true;
+			}
+		}
+		if (isRotationPossible && piece.pieceType != piece.pieceO) {
+			for (int i = 0; i < 4; i++) {
+				piece.shape[i].x = tempShape[i].x;
+				piece.shape[i].y = tempShape[i].y;
 			}
 		}
 		break;
