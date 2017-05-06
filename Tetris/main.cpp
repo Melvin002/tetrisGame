@@ -14,13 +14,19 @@ const int BOARD_HEIGTH = 20;
 const int LOCK_DELAY = 120;
 const int SHAPE_ARRAY_SIZE = 4;
 const int POSITION_OF_PIECE_CODE = 100; // yxx / 100 = y
+const int DAS_DELAY = 20; // DAS - delayed auto shift
+const int MOVE_AUTOREPEAT_DELAY = 3; //time between each repeat
 
 int board[BOARD_HEIGTH][BOARD_WIDTH] = { 0 };
-Piece piece;
+Piece piece = Piece(Piece::empty);
+Piece pieceInHold = Piece(Piece::empty);
 sf::RectangleShape rectangle(sf::Vector2f(30, 30));
 int ghostOffset;
 int lockDelayCounter;
-
+int softDownDAS;
+int leftDAS;
+int rightDAS;
+bool holdHappened = false;
 
 
 enum Directions {
@@ -28,7 +34,7 @@ enum Directions {
 };
 
 void processInput(sf::RenderWindow &window);
-void update();
+void update(sf::RenderWindow &window);
 void render(sf::RenderWindow &window);
 void move(Directions direction);
 void rotate(Directions direction);
@@ -36,8 +42,9 @@ void checkIfLanded();
 bool isSpaceOccupied(Directions direction, Point shape[], int distance = 1);
 void clearLines();
 void setPen(sf::RenderWindow &window, Piece::Pieces pieceType, int x, int y);
+bool checkIfGameLost();
 
-int main(){
+int main() {
 	/*
 	piece codes:
 	o - 1,	i - 2,	s - 3,	z - 4
@@ -54,17 +61,17 @@ int main(){
 	sf::RenderWindow window;
 	window.create(sf::VideoMode(WIDTH, HEIGTH), "Tetris!");
 	window.setFramerateLimit(FPS_NUMBER);
-	//window.setKeyRepeatEnabled(false);
+	window.setKeyRepeatEnabled(false);
 
 	sf::Clock clock;
 	sf::Time programTime;
 
-	piece = Piece();//piece is global for now
+	piece = Piece(Piece::random);//piece is global for now
 
 	while (window.isOpen()) {
-		
+
 		processInput(window);
-		update();
+		update(window);
 		render(window);
 
 	}
@@ -73,46 +80,79 @@ int main(){
 void processInput(sf::RenderWindow &window) {
 	//sfml window event capture
 	sf::Event event;
-	while (window.pollEvent(event)){
+	while (window.pollEvent(event)) {
 		if (event.type == sf::Event::Closed)
 			window.close();
 		//keyboard input
-		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Left) {
-			move(Left);
-		}
-		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Right) {
-			move(Right);
-		}
-		if (event.type == sf::Event::KeyPressed &&(event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::X)) {
+		if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::X)) {
 			rotate(Right);
-			window.setKeyRepeatEnabled(false);
 		}
 		if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::LControl || event.key.code == sf::Keyboard::Z)) {
 			rotate(Left);
-			window.setKeyRepeatEnabled(false);
-		}
-		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down) {
-			move(SoftDown);
 		}
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) {
 			move(DropDown);
-			//piece = Piece();
 		}
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) {
 			//pause in future
 		}
-		if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::LShift || event.key.code == sf::Keyboard::C)) {
-			//hold
+		if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::LShift || event.key.code == sf::Keyboard::C) && !holdHappened) {
+			if (pieceInHold.pieceType == Piece::empty){
+				pieceInHold = piece;
+				piece = Piece(Piece::random);
+			}
+			else {
+				Piece swapTemp = piece;
+				piece = pieceInHold;
+				piece.positionReset();
+				pieceInHold = swapTemp;
+			}
+			holdHappened = true;
 		}
-		if (event.type ==sf::Event::KeyReleased) {
-			window.setKeyRepeatEnabled(true);
+		if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Left) {
+			leftDAS = 0;
 		}
-
+		if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Right) {
+			rightDAS = 0;
+		}
+		if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Down) {
+			softDownDAS = 0;
+		}
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
+		if (leftDAS%DAS_DELAY == 0 && leftDAS <= DAS_DELAY) {
+			move(Left);
+		}
+		else if (leftDAS%MOVE_AUTOREPEAT_DELAY == 0 && leftDAS > DAS_DELAY) {
+			move(Left);
+			leftDAS = DAS_DELAY;
+		}
+		leftDAS++;
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+		if (rightDAS%DAS_DELAY == 0 && rightDAS <= DAS_DELAY) {
+			move(Right);
+		}
+		else if (rightDAS%MOVE_AUTOREPEAT_DELAY == 0 && rightDAS > DAS_DELAY) {
+			move(Right);
+			rightDAS = DAS_DELAY;
+		}
+		rightDAS++;
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+		if (softDownDAS%DAS_DELAY == 0 && softDownDAS <= DAS_DELAY) {
+			move(SoftDown);
+		}
+		else if (softDownDAS%MOVE_AUTOREPEAT_DELAY == 0 && softDownDAS > DAS_DELAY) {
+			move(SoftDown);
+			softDownDAS = DAS_DELAY;
+		}
+		softDownDAS++;
 	}
 
 }
 int counter = 0;
-void update() {
+void update(sf::RenderWindow &window) {
 	//piece fall speed
 	counter++;
 	if (counter > 60) {//60 speed fall limiter
@@ -129,6 +169,8 @@ void update() {
 	else
 		lockDelayCounter = 0;
 	checkIfLanded();
+	if(checkIfGameLost())
+		window.close();
 
 
 }
@@ -233,21 +275,21 @@ bool isSpaceOccupied(Directions direction, Point shape[], int distance) {
 	switch (direction) {
 	case Left:
 		for (int i = 0; i < 4; i++) {
-			if (!(shape[i].y + piece.position.y >= 0 && shape[i].y + piece.position.y < BOARD_HEIGTH && shape[i].x + piece.position.x - distance >= 0 && shape[i].x + piece.position.x - distance < BOARD_WIDTH && board[shape[i].y + piece.position.y][shape[i].x + piece.position.x - distance] == 0))
+			if (!(shape[i].y + piece.position.y < BOARD_HEIGTH && shape[i].x + piece.position.x - distance >= 0 && shape[i].x + piece.position.x - distance < BOARD_WIDTH && board[shape[i].y + piece.position.y][shape[i].x + piece.position.x - distance] == 0))
 				return true;
 		}
 		return false;
 		break;
 	case Right:
 		for (int i = 0; i < 4; i++) {
-			if (!(shape[i].y + piece.position.y >= 0 && shape[i].y + piece.position.y < BOARD_HEIGTH && shape[i].x + piece.position.x + distance >= 0 && shape[i].x + piece.position.x + distance < BOARD_WIDTH && board[shape[i].y + piece.position.y][shape[i].x + piece.position.x + distance] == 0))
+			if (!(shape[i].y + piece.position.y < BOARD_HEIGTH && shape[i].x + piece.position.x + distance >= 0 && shape[i].x + piece.position.x + distance < BOARD_WIDTH && board[shape[i].y + piece.position.y][shape[i].x + piece.position.x + distance] == 0))
 				return true;
 		}
 		return false;
 		break;
 	case Bottom:
 		for (int i = 0; i < 4; i++) {
-			if (!(shape[i].x + piece.position.x >= 0 && shape[i].x + piece.position.x < BOARD_WIDTH && shape[i].y + piece.position.y + distance >= 0 && shape[i].y + piece.position.y + distance < BOARD_HEIGTH && board[shape[i].y + piece.position.y + distance][shape[i].x + piece.position.x] == 0))
+			if (!(shape[i].x + piece.position.x >= 0 && shape[i].x + piece.position.x < BOARD_WIDTH && shape[i].y + piece.position.y + distance < BOARD_HEIGTH && board[shape[i].y + piece.position.y + distance][shape[i].x + piece.position.x] == 0))
 				return true;
 		}
 		return false;
@@ -398,7 +440,8 @@ void checkIfLanded() {
 		}
 
 		clearLines();
-		piece = Piece();
+		piece = Piece(Piece::random);
+		holdHappened = false;
 		lockDelayCounter = 0;
 	}
 }
@@ -436,4 +479,15 @@ void clearLines() {
 			}
 		}
 	}
+}
+bool checkIfGameLost() {
+	int rowCounter = 0;
+	for (int j = 0; j < BOARD_WIDTH; j++) {
+		if (board[0][j] != 0)
+			rowCounter++;
+	}
+	if (rowCounter > 0)
+		return true;
+	else 
+		return false;
 }

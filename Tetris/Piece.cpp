@@ -4,12 +4,21 @@
 std::vector<Piece::Pieces> Piece::randomPermutationOfPieces;
 
 
-Piece::Piece() {
-	if (randomPermutationOfPieces.empty()) {
-		putPieceTypesAndShuffle();
+Piece::Piece(Pieces type) {
+	if (type == empty) {
+		pieceType = type;
+		return;
 	}
-	pieceType = randomPermutationOfPieces.back();
-	randomPermutationOfPieces.pop_back();
+	if (type == random) {
+		if (randomPermutationOfPieces.empty()) {
+			putPieceTypesAndShuffle();
+		}
+		pieceType = randomPermutationOfPieces.back();
+		randomPermutationOfPieces.pop_back();
+	}
+	else {
+		pieceType = type;
+	}
 	
 	position = Point(3, -1);
 	switch (pieceType) {
@@ -82,6 +91,9 @@ void Piece::putPieceTypesAndShuffle(){
 	}
 	std::random_shuffle(randomPermutationOfPieces.begin(), randomPermutationOfPieces.end(), myrandom);
 	
+}
+void Piece::positionReset() {
+	this->position = DEFAULT_POSITION;
 }
 
 
