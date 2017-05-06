@@ -20,7 +20,7 @@ Piece::Piece(Pieces type) {
 		pieceType = type;
 	}
 	
-	position = Point(3, -1);
+	position = DEFAULT_POSITION;
 	switch (pieceType) {
 	case pieceO:
 		pieceType = pieceO;
@@ -56,18 +56,18 @@ Piece::Piece(Pieces type) {
 		break;
 	case pieceL:
 		pieceType = pieceL;
-		shape[0] = Point(0, 0);
-		shape[1] = Point(1, 0);
-		shape[2] = Point(2, 0);
-		shape[3] = Point(0, 1);
+		shape[0] = Point(0, 1);
+		shape[1] = Point(1, 1);
+		shape[2] = Point(2, 1);
+		shape[3] = Point(2, 0);
 		pieceCode = 500;
 		break;
 	case pieceJ:
 		pieceType = pieceJ;
 		shape[0] = Point(0, 0);
-		shape[1] = Point(1, 0);
-		shape[2] = Point(2, 0);
-		shape[3] = Point(2, 1);
+		shape[1] = Point(1, 1);
+		shape[2] = Point(2, 1);
+		shape[3] = Point(0, 1);
 		pieceCode = 600;
 		break;
 	case pieceT:

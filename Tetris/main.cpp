@@ -8,9 +8,9 @@
 const int FPS_NUMBER = 60;
 const int MULTIPLER = 300;
 const int WIDTH = 1 * MULTIPLER;
-const int HEIGTH = 2 * MULTIPLER;
+const int HEIGTH = 2.0333333 * MULTIPLER;
 const int BOARD_WIDTH = 10;
-const int BOARD_HEIGTH = 20;
+const int BOARD_HEIGTH = 22;
 const int LOCK_DELAY = 120;
 const int SHAPE_ARRAY_SIZE = 4;
 const int POSITION_OF_PIECE_CODE = 100; // yxx / 100 = y
@@ -38,7 +38,7 @@ void update(sf::RenderWindow &window);
 void render(sf::RenderWindow &window);
 void move(Directions direction);
 void rotate(Directions direction);
-void checkIfLanded();
+void checkIfLanded(sf::RenderWindow &window);
 bool isSpaceOccupied(Directions direction, Point shape[], int distance = 1);
 void clearLines();
 void setPen(sf::RenderWindow &window, Piece::Pieces pieceType, int x, int y);
@@ -168,28 +168,27 @@ void update(sf::RenderWindow &window) {
 		lockDelayCounter++;
 	else
 		lockDelayCounter = 0;
-	checkIfLanded();
-	if(checkIfGameLost())
-		window.close();
+	checkIfLanded(window);
+
 
 
 }
 void render(sf::RenderWindow &window) {
 	window.clear(sf::Color::Black);
 	//przelatuje po planszy i rysuje kwadracik tam gdzie cos ma byc - chujowe trzeba bedzie zmienic
-	for (int i = 0; i < BOARD_HEIGTH; i++) {
+	for (int i = BOARD_HEIGTH - 1; i >= 0; i--) {
 		for (int j = 0; j < BOARD_WIDTH; j++) {
 			if(board[i][j] != 0)
-				setPen(window, static_cast<Piece::Pieces>((board[i][j] / POSITION_OF_PIECE_CODE) - 1), j * 30, i * 30);
+				setPen(window, static_cast<Piece::Pieces>((board[i][j] / POSITION_OF_PIECE_CODE) - 1), j * 30, (i * 30) - 50);//60 is two squares, 
 		}
 	}
 	//render ghost
 	for (int i = 0; i < 4; i++) {
-		setPen(window, Piece::shadow, (piece.shape[i].x + piece.position.x) * 30, (piece.shape[i].y + piece.position.y + ghostOffset) * 30);
+		setPen(window, Piece::shadow, (piece.shape[i].x + piece.position.x) * 30, ((piece.shape[i].y + piece.position.y + ghostOffset) * 30) - 50);
 	}
 	//render moving piece
 	for (int i = 0; i < 4; i++){
-		setPen(window, piece.pieceType, (piece.shape[i].x + piece.position.x) * 30, (piece.shape[i].y + piece.position.y) * 30);
+		setPen(window, piece.pieceType, (piece.shape[i].x + piece.position.x) * 30, ((piece.shape[i].y + piece.position.y) * 30) - 50);
 	}
 
 	window.display();
@@ -330,32 +329,32 @@ void rotate(Directions direction) {
 			}
 		}
 		if (!isRotationPossible) {
-			if (!isSpaceOccupied(Left, tempShape)) {
-				piece.position.x--;
+			if (!isSpaceOccupied(Top, tempShape)) {
+				piece.position.y--;
 				isRotationPossible = true;
 			}
 			else if(!isSpaceOccupied(Right, tempShape)) {
 				piece.position.x++;
 				isRotationPossible = true;
 			}
-			else if(!isSpaceOccupied(Top, tempShape)){
-				piece.position.y--;
+			else if(!isSpaceOccupied(Left, tempShape)){
+				piece.position.x--;
 				isRotationPossible = true;
 			}
 			else if (!isSpaceOccupied(Bottom, tempShape)) {
 				piece.position.y++;
 				isRotationPossible = true;
 			}
-			else if (!isSpaceOccupied(Left, tempShape, 2)) {
-				piece.position.x -= 2;
+			else if (!isSpaceOccupied(Top, tempShape, 2)) {
+				piece.position.y -= 2;
 				isRotationPossible = true;
 			}
 			else if (!isSpaceOccupied(Right, tempShape, 2)) {
 				piece.position.x += 2;
 				isRotationPossible = true;
 			}
-			else if (!isSpaceOccupied(Top, tempShape, 2)) {
-				piece.position.y -= 2;
+			else if (!isSpaceOccupied(Left, tempShape, 2)) {
+				piece.position.x -= 2;
 				isRotationPossible = true;
 			}
 			else if (!isSpaceOccupied(Bottom, tempShape, 2)) {
@@ -372,7 +371,7 @@ void rotate(Directions direction) {
 		
 		break;
 	case Left:
-		if (piece.pieceType != piece.pieceI) {
+		if (piece.pieceType != piece.pieceI && piece.pieceType != piece.pieceO) {
 			for (int i = 0; i < 4; i++) {
 				tempShape[i].x = piece.shape[i].y;
 				tempShape[i].y = 2 - piece.shape[i].x;
@@ -390,32 +389,32 @@ void rotate(Directions direction) {
 			}
 		}
 		if (!isRotationPossible) {
-			if (!isSpaceOccupied(Left, tempShape)) {
-				piece.position.x--;
+			if (!isSpaceOccupied(Top, tempShape)) {
+				piece.position.y--;
 				isRotationPossible = true;
 			}
 			else if (!isSpaceOccupied(Right, tempShape)) {
 				piece.position.x++;
 				isRotationPossible = true;
 			}
-			else if (!isSpaceOccupied(Top, tempShape)) {
-				piece.position.y--;
+			else if (!isSpaceOccupied(Left, tempShape)) {
+				piece.position.x--;
 				isRotationPossible = true;
 			}
 			else if (!isSpaceOccupied(Bottom, tempShape)) {
 				piece.position.y++;
 				isRotationPossible = true;
 			}
-			else if (!isSpaceOccupied(Left, tempShape, 2)) {
-				piece.position.x -= 2;
+			else if (!isSpaceOccupied(Top, tempShape, 2)) {
+				piece.position.y -= 2;
 				isRotationPossible = true;
 			}
 			else if (!isSpaceOccupied(Right, tempShape, 2)) {
 				piece.position.x += 2;
 				isRotationPossible = true;
 			}
-			else if (!isSpaceOccupied(Top, tempShape, 2)) {
-				piece.position.y -= 2;
+			else if (!isSpaceOccupied(Left, tempShape, 2)) {
+				piece.position.x -= 2;
 				isRotationPossible = true;
 			}
 			else if (!isSpaceOccupied(Bottom, tempShape, 2)) {
@@ -431,8 +430,9 @@ void rotate(Directions direction) {
 		}
 		break;
 	}
+	lockDelayCounter = 0;
 }
-void checkIfLanded() {
+void checkIfLanded(sf::RenderWindow &window) {
 	if (lockDelayCounter > LOCK_DELAY) {
 		//write piece to board
 		for (int i = 0; i < 4; i++) {
@@ -440,7 +440,11 @@ void checkIfLanded() {
 		}
 
 		clearLines();
+		if (checkIfGameLost())
+			window.close();
 		piece = Piece(Piece::random);
+		if (isSpaceOccupied(Bottom, piece.shape, 0))
+			window.close();
 		holdHappened = false;
 		lockDelayCounter = 0;
 	}

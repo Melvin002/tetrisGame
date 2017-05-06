@@ -2,7 +2,7 @@
 #include "Point.h"
 #include <vector>
 
-const Point DEFAULT_POSITION = Point(3, -1);
+const Point DEFAULT_POSITION = Point(3, 1);
 
 class Piece {
 public:
