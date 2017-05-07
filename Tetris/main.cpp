@@ -7,9 +7,11 @@
 
 const int BOARD_TOP_OFFSIDE = -50;
 const int BOARD_LEFT_OFFSIDE = 150;
+const int BOARD_RIGHT_OFFSIDE = 150;
 const int FPS_NUMBER = 60;
 const int MULTIPLER = 300;
-const int WIDTH = 1 * MULTIPLER + BOARD_LEFT_OFFSIDE;
+const int WIDTH = 1 * MULTIPLER + BOARD_LEFT_OFFSIDE + BOARD_RIGHT_OFFSIDE;
+const int RIGHT_WINDOW_SIDE = 1 * MULTIPLER + BOARD_LEFT_OFFSIDE;
 const int HEIGTH = 2.0333333 * MULTIPLER;
 const int BOARD_WIDTH = 10;
 const int BOARD_HEIGTH = 22;
@@ -19,8 +21,8 @@ const int POSITION_OF_PIECE_CODE = 100; // yxx / 100 = y
 const int DAS_DELAY = 20; // DAS - delayed auto shift
 const int MOVE_AUTOREPEAT_DELAY = 3; //time between each repeat
 const int SQUARE_SIDE = 30;
-const Point HOLD_POSITION(5,50);
-const Point NEXT_POSITION(20, 200);
+const Point HOLD_POSITION(5,200);
+const Point NEXT_POSITION(RIGHT_WINDOW_SIDE + 5, 200);
 
 int board[BOARD_HEIGTH][BOARD_WIDTH] = { 0 };
 Piece piece = Piece(Piece::empty);
@@ -109,11 +111,11 @@ void processInput(sf::RenderWindow &window) {
 		}
 		if (event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::LShift || event.key.code == sf::Keyboard::C) && !holdHappened) {
 			if (pieceInHold.pieceType == Piece::empty){
-				pieceInHold = piece;
+				pieceInHold = Piece(piece.pieceType);
 				piece = Piece(Piece::random);
 			}
 			else {
-				Piece swapTemp = piece;
+				Piece swapTemp = Piece(piece.pieceType);
 				piece = pieceInHold;
 				piece.positionReset();
 				pieceInHold = swapTemp;
@@ -235,14 +237,17 @@ void render(sf::RenderWindow &window) {
 	for (int i = 0; i < 4; i++) {
 		setPen(window, pieceInHold.pieceType, (pieceInHold.shape[i].x * SQUARE_SIDE + HOLD_POSITION.x), (pieceInHold.shape[i].y * SQUARE_SIDE + HOLD_POSITION.y));
 	}
-	/*//next
-	std::vector<Piece::Pieces>::iterator pieceIterator = piece.randomPermutationOfPieces.end();
-	for (int k = 0; k < 1; k++, pieceIterator--) {
-		Piece tempNextPiece = Piece(*pieceIterator);
+	//next
+	for (int k = 0, indexVector = piece.randomPermutationOfPieces.size() - 1; k < 3 && indexVector >= 0; k++, indexVector--) {
+		Piece tempNextPiece = Piece(piece.randomPermutationOfPieces[indexVector]);
 		for (int i = 0; i < 4; i++) {
 			setPen(window, tempNextPiece.pieceType, (tempNextPiece.shape[i].x * SQUARE_SIDE + NEXT_POSITION.x), (tempNextPiece.shape[i].y * SQUARE_SIDE + NEXT_POSITION.y + 3 * SQUARE_SIDE* k));
 		}
-	}*/
+	}
+	text.setString("NEXT");
+	text.setPosition(NEXT_POSITION.x + 20, NEXT_POSITION.y - 50);
+	window.draw(text);
+
 	window.display();
 }
 void setPen(sf::RenderWindow &window, Piece::Pieces pieceType, int x, int y) {

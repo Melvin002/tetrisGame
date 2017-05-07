@@ -10,7 +10,7 @@ Piece::Piece(Pieces type) {
 		return;
 	}
 	if (type == random) {
-		if (randomPermutationOfPieces.empty()) {
+		if (randomPermutationOfPieces.empty() || randomPermutationOfPieces.size() <= 7) {
 			putPieceTypesAndShuffle();
 		}
 		pieceType = randomPermutationOfPieces.back();
@@ -85,12 +85,22 @@ int myrandom(int i) {
 }
 
 void Piece::putPieceTypesAndShuffle(){
-	for (int enumIterator = pieceO; enumIterator < shadow; enumIterator++){
+	if (randomPermutationOfPieces.size() < 7) {
+		for (int enumIterator = pieceO; enumIterator < shadow; enumIterator++) {
+			Pieces p = static_cast<Pieces>(enumIterator);
+			randomPermutationOfPieces.push_back(p);
+		}
+		std::random_shuffle(randomPermutationOfPieces.begin(), randomPermutationOfPieces.end(), myrandom);
+	}
+	for (int enumIterator = pieceO; enumIterator < shadow; enumIterator++) {
 		Pieces p = static_cast<Pieces>(enumIterator);
 		randomPermutationOfPieces.push_back(p);
 	}
-	std::random_shuffle(randomPermutationOfPieces.begin(), randomPermutationOfPieces.end(), myrandom);
-	
+	std::vector<Pieces>::iterator middleIterator = randomPermutationOfPieces.begin();
+	for (int enumIterator = pieceO; enumIterator < shadow + 1; enumIterator++) {
+		middleIterator++;
+	}
+	std::random_shuffle(middleIterator, randomPermutationOfPieces.end(), myrandom);
 }
 void Piece::positionReset() {
 	this->position = DEFAULT_POSITION;
