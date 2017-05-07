@@ -5,9 +5,11 @@
 #include <ctime>  
 #include <stdlib.h> 
 
+const int BOARD_TOP_OFFSIDE = -50;
+const int BOARD_LEFT_OFFSIDE = 150;
 const int FPS_NUMBER = 60;
 const int MULTIPLER = 300;
-const int WIDTH = 1 * MULTIPLER;
+const int WIDTH = 1 * MULTIPLER + BOARD_LEFT_OFFSIDE;
 const int HEIGTH = 2.0333333 * MULTIPLER;
 const int BOARD_WIDTH = 10;
 const int BOARD_HEIGTH = 22;
@@ -16,11 +18,15 @@ const int SHAPE_ARRAY_SIZE = 4;
 const int POSITION_OF_PIECE_CODE = 100; // yxx / 100 = y
 const int DAS_DELAY = 20; // DAS - delayed auto shift
 const int MOVE_AUTOREPEAT_DELAY = 3; //time between each repeat
+const int SQUARE_SIDE = 30;
+const Point HOLD_POSITION(5,50);
+const Point NEXT_POSITION(20, 200);
 
 int board[BOARD_HEIGTH][BOARD_WIDTH] = { 0 };
 Piece piece = Piece(Piece::empty);
 Piece pieceInHold = Piece(Piece::empty);
-sf::RectangleShape rectangle(sf::Vector2f(30, 30));
+sf::RectangleShape rectangle(sf::Vector2f(SQUARE_SIDE, SQUARE_SIDE));
+sf::Font font;
 int ghostOffset;
 int lockDelayCounter;
 int softDownDAS;
@@ -57,6 +63,11 @@ int main() {
 	0 - empty
 	*/
 	std::srand(unsigned(std::time(0)));
+
+	
+	if (!font.loadFromFile("arial.ttf")) {
+
+	}
 
 	sf::RenderWindow window;
 	window.create(sf::VideoMode(WIDTH, HEIGTH), "Tetris!");
@@ -175,22 +186,63 @@ void update(sf::RenderWindow &window) {
 }
 void render(sf::RenderWindow &window) {
 	window.clear(sf::Color::Black);
-	//przelatuje po planszy i rysuje kwadracik tam gdzie cos ma byc - chujowe trzeba bedzie zmienic
+	
+	sf::RectangleShape outline(sf::Vector2f(BOARD_WIDTH * SQUARE_SIDE, BOARD_HEIGTH * SQUARE_SIDE));
+	outline.setOutlineColor(sf::Color::White);
+	outline.setFillColor(sf::Color::Transparent);
+	outline.setOutlineThickness(1);
+	outline.setPosition(BOARD_LEFT_OFFSIDE,0);
+	window.draw(outline);
+
+
+	for (int i = BOARD_HEIGTH - 1; i >= 0; i--) {
+		for (int j = 0; j < BOARD_WIDTH; j++) {
+			if (i % 2 == 0 && j % 2 == 0 || i % 2 == 1 && j % 2 == 1) {
+				rectangle.setFillColor(sf::Color(32, 32, 32, 50));
+				rectangle.setPosition((j * SQUARE_SIDE) + BOARD_LEFT_OFFSIDE, (i * SQUARE_SIDE) + BOARD_TOP_OFFSIDE);
+				window.draw(rectangle);
+			}
+			else {
+				rectangle.setFillColor(sf::Color(128, 128, 128, 50));
+				rectangle.setPosition((j * SQUARE_SIDE) + BOARD_LEFT_OFFSIDE, (i * SQUARE_SIDE) + BOARD_TOP_OFFSIDE);
+				window.draw(rectangle);
+			}
+		}
+	}
+	//check all board and draws tetrominos
 	for (int i = BOARD_HEIGTH - 1; i >= 0; i--) {
 		for (int j = 0; j < BOARD_WIDTH; j++) {
 			if(board[i][j] != 0)
-				setPen(window, static_cast<Piece::Pieces>((board[i][j] / POSITION_OF_PIECE_CODE) - 1), j * 30, (i * 30) - 50);//60 is two squares, 
+				setPen(window, static_cast<Piece::Pieces>((board[i][j] / POSITION_OF_PIECE_CODE) - 1), (j * SQUARE_SIDE) + BOARD_LEFT_OFFSIDE , (i * SQUARE_SIDE) + BOARD_TOP_OFFSIDE);//60 is two squares, 
 		}
 	}
 	//render ghost
 	for (int i = 0; i < 4; i++) {
-		setPen(window, Piece::shadow, (piece.shape[i].x + piece.position.x) * 30, ((piece.shape[i].y + piece.position.y + ghostOffset) * 30) - 50);
+		setPen(window, Piece::shadow, ((piece.shape[i].x + piece.position.x) * SQUARE_SIDE) + BOARD_LEFT_OFFSIDE, ((piece.shape[i].y + piece.position.y + ghostOffset) * SQUARE_SIDE) + BOARD_TOP_OFFSIDE);
 	}
 	//render moving piece
 	for (int i = 0; i < 4; i++){
-		setPen(window, piece.pieceType, (piece.shape[i].x + piece.position.x) * 30, ((piece.shape[i].y + piece.position.y) * 30) - 50);
+		setPen(window, piece.pieceType, ((piece.shape[i].x + piece.position.x) * SQUARE_SIDE) + BOARD_LEFT_OFFSIDE, ((piece.shape[i].y + piece.position.y) * SQUARE_SIDE) + BOARD_TOP_OFFSIDE);
 	}
-
+	//hold
+	sf::Text text;
+	text.setFont(font);
+	text.setString("HOLD");
+	text.setCharacterSize(24);
+	text.setFillColor(sf::Color::White);
+	text.setPosition(HOLD_POSITION.x + 20,HOLD_POSITION.y - 50);
+	window.draw(text);
+	for (int i = 0; i < 4; i++) {
+		setPen(window, pieceInHold.pieceType, (pieceInHold.shape[i].x * SQUARE_SIDE + HOLD_POSITION.x), (pieceInHold.shape[i].y * SQUARE_SIDE + HOLD_POSITION.y));
+	}
+	/*//next
+	std::vector<Piece::Pieces>::iterator pieceIterator = piece.randomPermutationOfPieces.end();
+	for (int k = 0; k < 1; k++, pieceIterator--) {
+		Piece tempNextPiece = Piece(*pieceIterator);
+		for (int i = 0; i < 4; i++) {
+			setPen(window, tempNextPiece.pieceType, (tempNextPiece.shape[i].x * SQUARE_SIDE + NEXT_POSITION.x), (tempNextPiece.shape[i].y * SQUARE_SIDE + NEXT_POSITION.y + 3 * SQUARE_SIDE* k));
+		}
+	}*/
 	window.display();
 }
 void setPen(sf::RenderWindow &window, Piece::Pieces pieceType, int x, int y) {
